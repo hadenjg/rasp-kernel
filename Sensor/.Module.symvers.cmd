@@ -1,0 +1,1 @@
+cmd_/home/anon/Dev/Rasp-Kernel/Sensor/Module.symvers :=  sed 's/ko$$/o/'  /home/anon/Dev/Rasp-Kernel/Sensor/modules.order | scripts/mod/modpost -m -a    -o /home/anon/Dev/Rasp-Kernel/Sensor/Module.symvers -e -i Module.symvers -T - 

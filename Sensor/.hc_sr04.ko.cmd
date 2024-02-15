@@ -1,0 +1,1 @@
+cmd_/home/anon/Dev/Rasp-Kernel/Sensor/hc_sr04.ko := ld -r -EL -z noexecstack --build-id=sha1  -T scripts/module.lds -o /home/anon/Dev/Rasp-Kernel/Sensor/hc_sr04.ko /home/anon/Dev/Rasp-Kernel/Sensor/hc_sr04.o /home/anon/Dev/Rasp-Kernel/Sensor/hc_sr04.mod.o;  true
