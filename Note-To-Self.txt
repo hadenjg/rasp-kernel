@@ -1,0 +1,59 @@
+Copying last entry from notes and now keeping track here so I can develop away from home as well:
+
+02/19/24 ----------------------------------------------------------------------------------------------------------------------------------
+Got the device driver working and the device reads the sensor information correctly!  So the tutorial worked.
+now I am going to write a device driver for the CAP1188 using i2c then spi
+
+Then I am going to do the block device flash/eeprom thing i have.
+
+Then once I have written all these device drivers.  I will implement them in a yocto build somehow or atleast learn how to do that.
+
+because I don't want to do the yocto stuff now and wipe the harddrive for the raspberry pi. Cause then I'll jsut have to reflash it.
+
+Right now I need to be able to transfer what I learned from the last device driver (the basic ideas)
+then i need to implement communicating over i2c instead.. (and then spi)
+
+https://embetronicx.com/tutorials/linux/device-drivers/i2c-linux-device-driver-using-raspberry-pi/
+
+https://learn.adafruit.com/adafruit-cap1188-breakout/pinouts
+
+and then instead of make files figure out how to use cmake files
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+Fuck the other things I posted.  It seems that the i2c device driver is already created (duh) and we just have to read/write to it like its a file....
+ which makes me wonder what writing this device driver must be like?  
+ although that shit is probably provided to us from manufactureres 
+ liek for the ccu like shawn said
+
+ https://elinux.org/Interfacing_with_I2C_Devices
+ https://docs.kernel.org/i2c/writing-clients.html
+https://learn.sparkfun.com/tutorials/i2c/all
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+
+https://elinux.org/Interfacing_with_I2C_Devices
+
+
+04/05/24-------------------------------------------------------------------------------------------------
+
+==============================
+Useful links:
+==============================
+https://embetronicx.com/linux-device-driver-tutorials/
+https://embetronicx.com/tutorials/linux/device-drivers/i2c-linux-device-driver-using-raspberry-pi/#How_I2C_bus_driver_works
+
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+https://pinout.xyz/
+==============================
+
+OK SINCE I DON"T REMEMBER ANYTHJING
+
+start simple and just create the hello world version of this shit.  Then work on actually implementing the device....
+
+To keep these notes updated... will have to upload them to github or something...
+
+
+cool atleast we got make to work....
+
+
