@@ -1,0 +1,8 @@
+# ignore all generated files and executables
+*.cmd
+*.symvers
+*.ko
+*.mod.*
+*.o
+*.order
+*.mod
