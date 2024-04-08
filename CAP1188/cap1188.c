@@ -1,113 +1,77 @@
-#include <linux/cdev.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
-#include <linux/kdev_t.h>
 #include <linux/module.h>
-#include <linux/semaphore.h>
-#include <linux/timekeeping.h>
-#include <linux/uaccess.h>
-#include <linux/wait.h>
-#include <asm/atomic.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
 
-#define GPIO_RST  (6)
+#define I2C_BUS_AVAILABLE (1)
+#define SLAVE_DEVICE_NAME ("CAP1188")
+#define CAP1188_SLAVE_ADDR (0x29)
 
-struct cdev *cap1188_cdev;
-int drv_major = 0;
-int gpio_irq_number;
+static struct i2c_adapter cap_i2c_adapter = NULL;
+static struct i2c_client cap_i2c_client = NULL;
 
-wait_queue_head_t wait_for_echo;
-volatile int condition_echo;
-
-// Only one process shall be able to open the device at the same time
-atomic_t opened = ATOMIC_INIT(-1);
-
-// Only one thread of execution shall read at the same time since a read triggers a HW measurement
-DEFINE_SEMAPHORE(read_semaphore);
-
-ssize_t cap1188_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+static int I2C_Write(unsigned char *buf, unsigned int len)
 {
-    /*if (*f_pos > 0) {
-        return 0; // EOF
-    }
+    int ret = i2c_master_send(cap_i2c_client, buf, len);
+    return ret;
+}
 
-    if (copy_to_user(buf, &range_mm, sizeof(range_mm))) {
-        return -EFAULT;
-    }
+static int I2C_Read(unsigned char *out_buf, unsigned int len)
+{
+    int ret = i2c_master_recv(cap_i2c_client, out_buf, len)
+    return ret;
+}
 
-    *f_pos += sizeof(range_mm);
+//static void CAP1188_Write(bool is_cmd, unsigned char data)
+//{
+    //int ret;
+    //ret = I2C_Write(buf, 2);
+//}
 
-    return sizeof(range_mm);*/
+/*static int CAP1188_Init(void)
+{
+    //write to registers 
+    //CAP1188_Write(true, 0xaa)
+}*/
+
+static int cap_probe(struct i2c_client *client, const struct i2c_device_id *id)
+{
+    //CAP1188_Init();
+    pr_info("CAP1188 probed!!!\n");
+}
+
+static int cap_remove(struct i2c_client* client)
+{
+    pr_info("CAP1188 Removed!!!\n");
     return 0;
 }
 
-int cap1188_open(struct inode *inode, struct file *filp) {
-    // Allow only one process to open the device at the same time
-    /*if (atomic_inc_and_test(&opened)) {
-        return 0;
+static const struct i2c_device_id cap_id[] = {
+    {SLAVE_DEVICE_NAME, 0},
+    {}
+};
+MODULE_DEVICE_TABLE(i2c, cap_id);
+
+static struct i2c_driver cap_driver = {
+    .driver = {
+        .name = SLAVE_DEVICE_NAME,
+        .owner = THIS_MODULE,
     }
-    else {
-        return -EBUSY;
-    }*/
-    return 0;
-}
-
-int cap1188_release(struct inode *inode, struct file *filp) {
-    //atomic_set(&opened, -1);
-	return 0;
-}
-
-struct file_operations cap1188_fops = {
-	.owner =     THIS_MODULE,
-	.read =	     cap1188_read,
-	.open =	     cap1188_open,
-	.release =   cap1188_release
+    .probe = cap_probe,
+    .remove = cap_remove,
+    .id_table = cap_id,
 };
 
-static int cap1188_init(void)
+static struct i2c_board_info cap_i2c_board_info = {
+    I2C_BOARD_INFO(SLAVE_DEVICE_NAME, CAP1138_SLAVE_ADDR)
+};
+
+static int __init cap_driver_init(void)
 {
-    int result;
-    dev_t dev = MKDEV(drv_major, 0);
+    int ret = -1;
+    cap_i2c_adapter = i2c_get_adapter(I2C_BUS_AVAILABLE);
 
-    pr_info("[CAP1188]: Initializing CAP1188\n");
-
-    result = alloc_chrdev_region(&dev, 0, 1, "cap1188");
-    drv_major = MAJOR(dev);
-
-    if (result < 0) {
-        pr_alert("[CAP1188]: Error in alloc_chrdev_region\n");
-        return result;
-    }
-
-    cap1188_cdev = cdev_alloc();
-    cap1188_cdev->ops = &cap1188_fops;
-
-    result = cdev_add(cap1188_cdev, dev, 1);
-    if (result < 0) {
-        pr_alert("[CAP1188]: Error in cdev_add\n");
-        unregister_chrdev_region(dev, 1);
-        return result;
-    }
-
-    return 0;
+    if()
 }
-
-static void cap1188_exit(void)
-{
-    dev_t dev = MKDEV(drv_major, 0);
-    cdev_del(cap1188_cdev);
-
-    unregister_chrdev_region(dev, 1);
-
-    pr_info("[CAP1188]: Exit CAP1188\n");
-}
-
-
-MODULE_AUTHOR("ME");
-MODULE_DESCRIPTION("Linux device driver for CAP1188 ultrasonic distance sensor");
-MODULE_LICENSE("GPL");
-
-module_init(cap1188_init);
-module_exit(cap1188_exit);

@@ -57,3 +57,8 @@ To keep these notes updated... will have to upload them to github or something..
 cool atleast we got make to work....
 
 
+cleaned up repsoitory and rreacquainted myself with all this stuff.  Also got vs code to actually link to the linux kernel libraries
+
+04/07/24-------------------------------------------------------------------------------------------------
+
+After I get this working, get a yocto build for it and put that on another sd card??
