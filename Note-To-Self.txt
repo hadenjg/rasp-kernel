@@ -62,3 +62,58 @@ cleaned up repsoitory and rreacquainted myself with all this stuff.  Also got vs
 04/07/24-------------------------------------------------------------------------------------------------
 
 After I get this working, get a yocto build for it and put that on another sd card??
+
+04/08/24-------------------------------------------------------------------------------------------------
+
+==============================
+Useful links:
+==============================
+https://embetronicx.com/linux-device-driver-tutorials/
+https://embetronicx.com/tutorials/linux/device-drivers/i2c-linux-device-driver-using-raspberry-pi/#How_I2C_bus_driver_works
+kernel.org/doc/html/v4.14/driver-api/i2c.html
+
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+github.com/torvalds/linux/blob/master/include/linux/i2c.h
+
+upto date somewhat:
+kernel.org/doc/html/latest/i2c/writing-clients.html
+
+https://pinout.xyz/
+==============================
+
+finished following the guide.  Now going to try and understand what is actually going on..  (and i didn't implement the actual device.  I attempted to build as is, and it died as expected.
+
+instead of probe you should use probe_new (probe is soon to be deprecated
+
+"For automatic device detection, both detect and address_list must be defined. class should also be set"
+
+
+///////////04/09/24
+
+the guide has some outdated i2c commands in there.  The most uptodate stuff is in:
+github.com/torvalds/linux/blob/master/include/linux/i2c.h
+
+had to update i2c_new_device to i2c_new_client_device
+
+also have to update the i2c_driver so that remove returns a void * to something instead of an int
+
+today I was able to get the module to build with no errors.  It is still a skeleton with no functionality, but atleast it builds
+
+///////////04/10/24
+
+Ok so yesterday I got the skeleton together, today I will try to get some sort of info or atleast take the steps to get some sort of info from the chip onto the pi...
+
+walking through init
+
+after i2c_add_driver is called "all the i2c devices will be traversed.  Once matched, the probe function of the driver will be executed"
+
+since this device can set leds as well as read info.  I guess the best thing to
+do just to verify that I am communicating at all is to write a value to just turn the ledon and then off.  (upon inserting and removing the module)  That would be a good basic thing to do
+
+So based on the CAP1188 pdf I should 
+
+write to 00 for the main power control
+
+
+reading through the data sheet....  Trying to figure out how to get an led to turn on
