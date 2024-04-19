@@ -30,21 +30,30 @@ static int I2C_Read(unsigned char *out_buf, unsigned int len)
     //ret = I2C_Write(buf, 2);
 //}
 
-/*static int CAP1188_Init(void)
-{
+//static int CAP1188_Init(void)
+//{
     //write to registers 
-    //CAP1188_Write(true, 0xaa)
-}*/
+    //CAP1188_Write(true, 0x74)
+//}
 
-static int cap_probe(struct i2c_client *client, const struct i2c_device_id *id)
+static int cap_probe(struct i2c_client *client)//, const struct i2c_device_id *id)
 {
     //CAP1188_Init();
+    unsigned char buf[2] = {0};
+    buf[0] = 0x74;
+    buf[1] = 0xfe;
+    I2C_Write(buf, 2);
     pr_info("CAP1188 probed!!!\n");
     return 0;
 }
 
 static void cap_remove(struct i2c_client* client)
 {
+    unsigned char buf[2] = {0};
+    buf[0] = 0x74;
+    buf[1] = 0x00;
+    I2C_Write(buf, 2);
+
     pr_info("CAP1188 Removed!!!\n");
 }
 
@@ -54,12 +63,15 @@ static const struct i2c_device_id cap_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, cap_id);
 
+//static const struct of_device_id cap_of_match[] = {
+	//{.compatible = "
+
 static struct i2c_driver cap_driver = {
     .driver = {
         .name = SLAVE_DEVICE_NAME,
         .owner = THIS_MODULE,
     },
-    .probe = cap_probe,
+    .probe_new = cap_probe,
     .remove = cap_remove,
     .id_table = cap_id,
 };
@@ -68,7 +80,7 @@ static struct i2c_board_info cap_i2c_board_info = {
     I2C_BOARD_INFO(SLAVE_DEVICE_NAME, CAP1188_SLAVE_ADDR)
 };
 
-static int __init cap_driver_init(void)
+/*static int __init cap_driver_init(void)
 {
     int ret = -1;
     cap_i2c_adapter = i2c_get_adapter(I2C_BUS_AVAILABLE);
@@ -87,17 +99,18 @@ static int __init cap_driver_init(void)
     }
     pr_info("Driver Added!!!!\n");
     return ret;
-}
+}*/
 
-static void __exit cap_driver_exit(void)
+/*static void __exit cap_driver_exit(void)
 {
 	i2c_unregister_device(cap_i2c_client);
 	i2c_del_driver(&cap_driver);
 	pr_info("Driver Removed!!!\n");
-}
+}*/
 
-module_init(cap_driver_init);
-module_exit(cap_driver_exit);
+//module_init(cap_driver_init);
+//module_exit(cap_driver_exit);
+module_i2c_driver(cap_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("ME");

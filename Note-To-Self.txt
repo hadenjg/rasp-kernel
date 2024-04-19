@@ -117,3 +117,139 @@ write to 00 for the main power control
 
 
 reading through the data sheet....  Trying to figure out how to get an led to turn on
+
+//////////04/15/2024
+
+github.com/torvalds/linux/blob/master/drivers/input/keyboard/cap11xx.c
+
+looks like its actaully already in the linux kernel lol
+but i am having a hard time understanding exactly what they are doing since it is implementing not only CAP1188 but all CAP11xx devices.
+
+module_i2c_driver() can replace module_init and module_exit
+
+but I'll leave it in there for now:
+
+To do:
+1.) turn an led on and off
+2.) eventually replace init and exit with module_i2c_driver()
+
+
+ok led stuff:
+
+5.31 led behavior registers
+
+5.28 Led output control register (this may be how to do it (by default the leds are not
+connected to the sensors))
+
+
+04/16/24-------------------------------------------------------------------------------------------------
+
+==============================
+Useful links:
+==============================
+https://embetronicx.com/linux-device-driver-tutorials/
+https://embetronicx.com/tutorials/linux/device-drivers/i2c-linux-device-driver-using-raspberry-pi/#How_I2C_bus_driver_works
+kernel.org/doc/html/v4.14/driver-api/i2c.html
+
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+github.com/torvalds/linux/blob/master/include/linux/i2c.h
+
+upto date somewhat:
+kernel.org/doc/html/latest/i2c/writing-clients.html
+
+//seemingly correct way to go about this:
+github.com/torvalds/linux/blob/master/drivers/input/keyboard/cap11xx.c
+
+https://pinout.xyz/
+==============================
+TODO:
+=============================
+General Knowledge/Problems
+============================
+1.) Turn an led on XXXXXXXXX
+2.) eventually replace __init and -_exit with module_i2c_driver()
+3.) replace the manual operation of wrting with i2c to that regmap thing that was being done 
+in the kernel code for cap11xx 
+4.) investigate message "loading out-of-tree module taints kernel"
+5.) look into difference between smbus and i2c
+
+Then:
+6.) Properly Initialize the device (have leds light up when sensors are touched and look at what other regs do)
+7.) recieve the sensor information from device
+8.) write user app that prints the sensor info to the screen
+9.) upon shutdown have the device clear the registers
+============================
+
+Success!!!  
+I was able to turn all the leds on the cap1188 device!!!  
+
+ the tutorial I am following and what is actually written in the kernel are two very different beasts
+the one in the kernel of course is looking for many different devices....
+
+how to tell what is best practice???
+
+Need to look into dbus message "loading out-of-tree module taints kernel."
+
+Ok there does not seem to be any real place anywhere that has a definitive answer for any of this lol
+
+Just have to keep cobbling and see what works and doesn't work lol.  
+
+The skeleton is atleast the same.  Its just the interactions with the kernel that can change or have 
+more streamlined ways of doing things....
+
+ok now that I got it to atleast write to the led I can do some other stuff......
+
+1.) Initialize the device
+2.) recieve the sensor information from device
+3.) write user app that prints the sensor info to the screen
+4.) upon shutdown have the device clear the registers
+
+1.) write a new module for spi version of doing it
+
+
+04/17/24-------------------------------------------------------------------------------------------------
+
+==============================
+Useful links:
+==============================
+https://embetronicx.com/linux-device-driver-tutorials/
+https://embetronicx.com/tutorials/linux/device-drivers/i2c-linux-device-driver-using-raspberry-pi/#How_I2C_bus_driver_works
+kernel.org/doc/html/v4.14/driver-api/i2c.html
+
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+github.com/torvalds/linux/blob/master/include/linux/i2c.h
+
+upto date somewhat:
+kernel.org/doc/html/latest/i2c/writing-clients.html
+
+//seemingly correct way to go about this:
+github.com/torvalds/linux/blob/master/drivers/input/keyboard/cap11xx.c
+
+https://pinout.xyz/
+==============================
+TODO:
+=============================
+General Knowledge/Problems
+============================
+2.) eventually replace __init and -_exit with module_i2c_driver()
+3.) replace the manual operation of wrting with i2c to that regmap thing that was being done 
+in the kernel code for cap11xx 
+4.) investigate message "loading out-of-tree module taints kernel"
+
+Then:
+6.) Properly Initialize the device (have leds light up when sensors are touched and look at what other regs do)
+7.) recieve the sensor information from device
+8.) write user app that prints the sensor info to the screen
+9.) upon shutdown have the device clear the registers
+
+Extra:
+5.) look into difference between smbus and i2c
+10.)Try to use the inbuild kernel module for this chip and see what happens
+11.) Create a developers blog about the journey so far?
+============================
+
+trying to figure out module_i2c_driver thing to get rid of boiler plate stuff.... it seems to insert the module, but my probe is not being called.....
+
+What can I do to fix this??
