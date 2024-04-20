@@ -236,12 +236,12 @@ General Knowledge/Problems
 2.) eventually replace __init and -_exit with module_i2c_driver()
 3.) replace the manual operation of wrting with i2c to that regmap thing that was being done 
 in the kernel code for cap11xx 
-4.) investigate message "loading out-of-tree module taints kernel"
+4.) investigate message "loading out-of-tree module taints kernel" XXX
 
 Then:
 6.) Properly Initialize the device (have leds light up when sensors are touched and look at what other regs do)
 7.) recieve the sensor information from device
-8.) write user app that prints the sensor info to the screen
+8.) write user app that prints the sensor info to the screen (sysfs)
 9.) upon shutdown have the device clear the registers
 
 Extra:
@@ -253,3 +253,37 @@ Extra:
 trying to figure out module_i2c_driver thing to get rid of boiler plate stuff.... it seems to insert the module, but my probe is not being called.....
 
 What can I do to fix this??
+
+
+//////04/19/24////////////
+
+Was trying to get rid of the boiler plate stuff with "module_i2c_driver" but it was not working for whatever reason.  Possibly need to initialize the cap1188 i2c driver differently for it.  Either way I wasted enough time for now on it.  I'll come back later.  For now I will continue onto the next step
+
+
+the tainted kernel thing can be ignored.  This is just for debugging purposes I guess, and is most likely caused by using propriety software in the linux kernel module I created..  and or its just not flagged as an intree module..  They say its fine to ignore
+
+going to skip the reg map thing for now.  I just want to get the userspace code running and actually get the device to output some data first.  Then I can worry about optimizing all this stuff..
+
+Looks like there are many ways for userspace to interact with kernel space.  3 listed in this website are (IOCTL, Sysfs, Procfs)
+
+I will investigate all 3 and figuer out which one I would like to implement.  
+
+I wonder what the one I used on the last device driver was?  
+
+
+After reading it seems like i should be using sysfs to communicate with my kernel module.  or atleast I am unless this module needs to communicate with something else in procfs
+
+/////04/20/24
+
+looks like my i2c device is auto populated in the sys file system after it is inserted into the kernel lcoated here:
+/sys/bus/i2c/devices/i2c-1/1-0029
+
+so possibly i just need to add the "kobjects" that are mentioned here:
+
+https://embetronicx.com/tutorials/linux/device-drivers/sysfs-in-linux-kernel/
+
+getting confused the more i dig into this:
+
+watching this video
+
+https://www.youtube.com/watch?v=g9-wgdesvwA
