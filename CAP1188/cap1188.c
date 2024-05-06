@@ -4,6 +4,34 @@
 #include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
+#include <linux/sysfs.h>
+#include <linux/kobject.h>
+
+//--SYSFS DEFINITIONS------------------------------------------------------------------
+static struct kobject *mymodule;
+static int myvariable = 9;
+static int sensor1 = 0;
+
+static ssize_t myvariable_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", myvariable);
+}
+
+static ssize_t sensor1_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor1);
+}
+
+//i'll leave this here as an example but my sensor info should be read only
+/*static ssize_t myvariable_store(struct kobject *kobj, struct kobj_attribute *attr, char *buf, size_t count)
+{
+    sscanf(buf, "%du", &myvariable);
+    return count;
+}*/
+
+//static struct kobj_attribute myvariable_attribute = __ATTR(myvariable, 0660, myvariable_show, (void *)myvariable_store);
+static struct kobj_attribute myvariable_attribute = __ATTR_RO(myvariable);
+static struct kobj_attribute sensor1_attribute = __ATTR_RO(sensor1);
 
 //--CHAR DEV DEFINITIONS---------------------------------------------------------------
 
@@ -46,33 +74,21 @@ static int I2C_Read(char *out_buf, unsigned int len)
     return ret;
 }
 
-//static void CAP1188_Write(bool is_cmd, unsigned char data)
-//{
-    //int ret;
-    //ret = I2C_Write(buf, 2);
-//}
-
-//static int CAP1188_Init(void)
-//{
-    //write to registers 
-    //CAP1188_Write(true, 0x74)
-//}
-
 static int cap_probe(struct i2c_client *client)//, const struct i2c_device_id *id)
 {
     //CAP1188_Init();
-    unsigned char buf[2] = {0};
+    char buf[2] = {0};
     buf[0] = 0x74;
     buf[1] = 0xfe;
     I2C_Write(buf, 2);
     pr_info("CAP1188 probed!!!\n");
 
 
-    unsigned char but[1] = {0};
+    char but[1] = {0};
     but[0] = 0x74;
     I2C_Write(but, 1);
 
-    unsigned char testting = {0};
+    char testting = {0};
     I2C_Read(&testting, sizeof(testting));
     pr_info("CAP1188 this write does not destory the pi!!!\n");
     pr_info("I actually read back information!!!! it is this: %c. \n", testting);
@@ -81,7 +97,7 @@ static int cap_probe(struct i2c_client *client)//, const struct i2c_device_id *i
 
 static void cap_remove(struct i2c_client* client)
 {
-    unsigned char buf[2] = {0};
+    char buf[2] = {0};
     buf[0] = 0x74;
     buf[1] = 0x00;
     I2C_Write(buf, 2);
@@ -131,27 +147,40 @@ static int cap1188_open(struct inode *inode, struct file *file)
 
 static ssize_t cap1188_read(struct file *filp, char __user *buffer, size_t length, loff_t *offset)
 {
-    //Don't actually do anything right now just verify that it returns something
     pr_info("I am reading from the cap1188 driver\n");
-    unsigned char but[1] = {0};
-    but[0] = 0x74;
-    I2C_Write(but, 1);
-    I2C_Read(buffer, length);
-    return 0;
+    //char but[] = {0x74};
+    char but[] = {0x10};
+    int len = sizeof(but); 
+    ssize_t ret = len; 
+
+    I2C_Write(but, len);
+
+    char butter[2] = {0};
+    I2C_Read(butter, sizeof(butter));
+    sensor1 = (int)butter[0];
+
+    /*if(*offset >= len || copy_to_user(buffer, butter, len))
+    {
+        pr_info("FAILED TO COPY TO user\n");
+        ret = 0;
+    }
+    else
+    {
+        pr_info("COPY TO USER SUCCEEDED!!!!!\n");
+        *offset += len;
+    }*/
+
+    return ret;
 }
 
 static ssize_t cap1188_write(struct file *filp, const char __user *buff, size_t len, loff_t *off)
 {
-    //unsigned char buf[2] = {0};
-    //buf[0] = 0x74;
-    //buf[1] = 0xfe;
     if(len > BUF_LEN)
         return -EINVAL;
     
     if(copy_from_user(msg, buff, len) != 0)
         return -EFAULT;
 
-    //I2C_Write(buff, 2);
     pr_info("I am attempting to write to the cap1188 device driver!\n");
 
     I2C_Write(msg, len);
@@ -202,6 +231,24 @@ static int __init cap_driver_init(void)
 
     pr_info("Device created on /dev/%s\n", SLAVE_DEVICE_NAME);
 
+// sysfs stuff -----------------------------------------------------------------------
+    mymodule = kobject_create_and_add("cap1188", kernel_kobj);
+    if(!mymodule)
+        return -ENOMEM;
+
+    ret = sysfs_create_file(mymodule, &myvariable_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the myvariable file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor1_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor1 file in /sys/kernel/cap1188");
+    }
+
+// ----------------------------------------------------------------------------------
     pr_info("Driver Added!!!!\n");
     return ret;
 }
@@ -214,11 +261,13 @@ static void __exit cap_driver_exit(void)
 	device_destroy(cls, MKDEV(major, 0));
 	class_destroy(cls);
 	unregister_chrdev(major, SLAVE_DEVICE_NAME);
+    kobject_put(mymodule);
 	pr_info("Driver Removed!!!\n");
 }
 
 module_init(cap_driver_init);
 module_exit(cap_driver_exit);
+//This should get rid of boiler plate code but I haven't been able to properly implement it
 //module_i2c_driver(cap_driver);
 
 MODULE_LICENSE("GPL");

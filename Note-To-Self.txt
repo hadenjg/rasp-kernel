@@ -575,3 +575,62 @@ like read the sensor data and store that info in the block device then powercycl
 
 BUT FOR NOW:
 read from cap1188 over i2c from userspace 
+
+
+
+///////05/06/24
+
+ok the read is still crashing from the user space.....
+
+but atleast now with this example it is not crashing..  I can try and figure out what is going wrong now.
+Some sort of overflow is occuring.
+
+///////05/07/24
+
+need to break this down to like one step at a time
+
+1.) have some sort of string in the user space
+2.) copy to kernel space and print out to verify that its the same value
+3.) read the string we already have //value we want from register
+4.) print that string /*register*/ value in kernel space
+5.) then copy to user....
+
+I guess we could even start with this example.
+
+
+WE GOT IT!!!!
+
+Interesting note:
+if you return the size read and its 1 then the userspace program will say the read failed
+but if the size is 2 then it says it passes???? 
+
+//////05/09/24
+
+^^^^Because of the null terminator ya dingus or maybe not.... idk
+
+To do still:
+1.) create /sysdev or whatever it was called variables to be updated by read XXXXXXXXXXXXX
+2.) read sensor data
+3.) create variables to be read from sysfs that hold sensor data 
+3.) convert read to update all sysdev variables with readings from the sensors
+4.) convert userspace to start the read process then actually read from sysproc or whatver it is called
+
+created a sample variable in sysfs (hello world example)
+
+Now to read sensor data and populate many variables with this 
+
+
+//////05/13/24
+
+Made my sysfs variable read only
+
+now to actually read sensor info.
+
+Will probably need to read the data sheet to see where that info is located
+
+I created a sensor sysfs file and it is updated everytime the char device is read...
+The problem I am seeing is that although the sysfs file is in fact updated everytime
+I am unable to read this value from the C++ file.
+Need to figure out how to get that value from sysfs into the user space
+
+I'm not even sure this is the best practice at this point lol.......  But it will be a good learning experience at least

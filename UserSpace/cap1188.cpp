@@ -32,7 +32,7 @@ int write() {
     return -1;
 }
 
-int read() {
+/*int read() {
     std::ifstream cap1188_in("/dev/CAP1188");
     if (!cap1188_in.is_open()) {
         std::cerr << "Could not open /dev/CAP1188" << std::endl;
@@ -40,8 +40,10 @@ int read() {
     }
 
     //uint32_t data;
-    char data = {0};
-    char* wow = &data;
+    //char data = {0};
+    //char* wow = &data;
+    //char * wow = "NOW THAT IS A STRANGE THING";
+    char wow[13] = {};
     if (cap1188_in.read(wow, sizeof(wow))) {
         std::cout << "Read Success!!!" << std::endl;
         //return data;
@@ -52,6 +54,46 @@ int read() {
     }
 
     return -1;
+}*/
+
+int read() {
+    std::ifstream cap1188_in("/dev/CAP1188");
+    if (!cap1188_in.is_open()) {
+        std::cerr << "Could not open /dev/CAP1188" << std::endl;
+        return -1;
+    }
+
+    char wow[2] = {};
+
+    if (!cap1188_in.read(wow, sizeof(wow))) {
+        std::cout << "Read Success!!! cahr" << std::endl;
+    }
+    else {
+        std::cout << "Read failed char" << std::endl;
+    }
+
+    std::ifstream sensor1_in("/sys/kernel/cap1188/sensor1");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /dev/CAP1188" << std::endl;
+        return -1;
+    }
+
+    char nope[2] = {};
+
+    if (!sensor1_in.read(nope, sizeof(nope))) {
+        std::cout << "Read Success!!! sys" << std::endl;
+    }
+    else {
+        std::cout << "Read failed sys" << std::endl;
+    }
+
+    for(int i =0; i < sizeof(nope); i++)
+    {
+        printf("%x", wow[i]);
+        std::cout << std::endl;
+    }
+
+    return 0;
 }
 
 int main() {
