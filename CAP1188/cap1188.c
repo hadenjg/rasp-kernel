@@ -9,17 +9,55 @@
 
 //--SYSFS DEFINITIONS------------------------------------------------------------------
 static struct kobject *mymodule;
-static int myvariable = 9;
-static int sensor1 = 0;
+#define numberOfSensors 8
 
-static ssize_t myvariable_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
-{
-    return sprintf(buf, "%d\n", myvariable);
-}
+static int sensor1 = 0;
+static int sensor2 = 0;
+static int sensor3 = 0;
+static int sensor4 = 0;
+static int sensor5 = 0;
+static int sensor6 = 0;
+static int sensor7 = 0;
+static int sensor8 = 0;
 
 static ssize_t sensor1_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
 {
     return sprintf(buf, "%d\n", sensor1);
+}
+
+static ssize_t sensor2_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor2);
+}
+
+static ssize_t sensor3_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor3);
+}
+
+static ssize_t sensor4_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor4);
+}
+
+static ssize_t sensor5_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor5);
+}
+
+static ssize_t sensor6_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor6);
+}
+
+static ssize_t sensor7_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor7);
+}
+
+static ssize_t sensor8_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+{
+    return sprintf(buf, "%d\n", sensor8);
 }
 
 //i'll leave this here as an example but my sensor info should be read only
@@ -30,8 +68,14 @@ static ssize_t sensor1_show(struct kobject *kobj, struct kobj_attribute *attr, c
 }*/
 
 //static struct kobj_attribute myvariable_attribute = __ATTR(myvariable, 0660, myvariable_show, (void *)myvariable_store);
-static struct kobj_attribute myvariable_attribute = __ATTR_RO(myvariable);
 static struct kobj_attribute sensor1_attribute = __ATTR_RO(sensor1);
+static struct kobj_attribute sensor2_attribute = __ATTR_RO(sensor2);
+static struct kobj_attribute sensor3_attribute = __ATTR_RO(sensor3);
+static struct kobj_attribute sensor4_attribute = __ATTR_RO(sensor4);
+static struct kobj_attribute sensor5_attribute = __ATTR_RO(sensor5);
+static struct kobj_attribute sensor6_attribute = __ATTR_RO(sensor6);
+static struct kobj_attribute sensor7_attribute = __ATTR_RO(sensor7);
+static struct kobj_attribute sensor8_attribute = __ATTR_RO(sensor8);
 
 //--CHAR DEV DEFINITIONS---------------------------------------------------------------
 
@@ -148,29 +192,59 @@ static int cap1188_open(struct inode *inode, struct file *file)
 static ssize_t cap1188_read(struct file *filp, char __user *buffer, size_t length, loff_t *offset)
 {
     pr_info("I am reading from the cap1188 driver\n");
-    //char but[] = {0x74};
-    char but[] = {0x10};
-    int len = sizeof(but); 
-    ssize_t ret = len; 
 
-    I2C_Write(but, len);
+    char sens1[] = {0x10};
+    char sens2[] = {0x11};
+    char sens3[] = {0x12};
+    char sens4[] = {0x13};
+    char sens5[] = {0x14};
+    char sens6[] = {0x15};
+    char sens7[] = {0x16};
+    char sens8[] = {0x17};
 
+    int len = sizeof(sens1); 
+
+    I2C_Write(sens1, sizeof(sens1));
     char butter[2] = {0};
     I2C_Read(butter, sizeof(butter));
     sensor1 = (int)butter[0];
 
-    /*if(*offset >= len || copy_to_user(buffer, butter, len))
-    {
-        pr_info("FAILED TO COPY TO user\n");
-        ret = 0;
-    }
-    else
-    {
-        pr_info("COPY TO USER SUCCEEDED!!!!!\n");
-        *offset += len;
-    }*/
+    I2C_Write(sens2, sizeof(sens2));
+    char butter2[2] = {0};
+    I2C_Read(butter2, sizeof(butter2));
+    sensor2 = (int)butter2[0];
 
-    return ret;
+    I2C_Write(sens3, sizeof(sens3));
+    char butter3[2] = {0};
+    I2C_Read(butter3, sizeof(butter3));
+    sensor3 = (int)butter3[0];
+
+    I2C_Write(sens4, sizeof(sens4));
+    char butter4[2] = {0};
+    I2C_Read(butter4, sizeof(butter4));
+    sensor4 = (int)butter4[0];
+
+    I2C_Write(sens5, sizeof(sens5));
+    char butter5[2] = {0};
+    I2C_Read(butter5, sizeof(butter5));
+    sensor5 = (int)butter5[0];
+
+    I2C_Write(sens6, sizeof(sens6));
+    char butter6[2] = {0};
+    I2C_Read(butter6, sizeof(butter6));
+    sensor6 = (int)butter6[0];
+
+    I2C_Write(sens7, sizeof(sens7));
+    char butter7[2] = {0};
+    I2C_Read(butter7, sizeof(butter7));
+    sensor7 = (int)butter7[0];
+
+    I2C_Write(sens8, sizeof(sens8));
+    char butter8[2] = {0};
+    I2C_Read(butter8, sizeof(butter8));
+    sensor8 = (int)butter8[0];
+
+    return 0;
 }
 
 static ssize_t cap1188_write(struct file *filp, const char __user *buff, size_t len, loff_t *off)
@@ -236,16 +310,52 @@ static int __init cap_driver_init(void)
     if(!mymodule)
         return -ENOMEM;
 
-    ret = sysfs_create_file(mymodule, &myvariable_attribute.attr);
-
-    if(ret) {
-        pr_info("failed to create the myvariable file in /sys/kernel/cap1188");
-    }
-
     ret = sysfs_create_file(mymodule, &sensor1_attribute.attr);
 
     if(ret) {
         pr_info("failed to create the sensor1 file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor2_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor2 file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor3_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor3 file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor4_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor4 file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor5_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor5 file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor6_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor6 file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor7_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor7 file in /sys/kernel/cap1188");
+    }
+
+    ret = sysfs_create_file(mymodule, &sensor8_attribute.attr);
+
+    if(ret) {
+        pr_info("failed to create the sensor8 file in /sys/kernel/cap1188");
     }
 
 // ----------------------------------------------------------------------------------

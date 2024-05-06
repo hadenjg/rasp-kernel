@@ -634,3 +634,56 @@ I am unable to read this value from the C++ file.
 Need to figure out how to get that value from sysfs into the user space
 
 I'm not even sure this is the best practice at this point lol.......  But it will be a good learning experience at least
+
+
+//////05/14/24
+
+CHATGPT came through for me with a easy and concise answer!!!!  waHOOOOOO!!!!!
+
+okokokokokokokok
+
+so that works
+
+I'm not worried about like cleaning this up or doing best work stuff....
+
+So I am just going to make like a crusty loop that reads all the sensor data.
+Then after that I will start working on the yocto build for this!
+
+To do still:
+1.) convert read to update all sysdev variables with readings from the sensors
+2.) update userspace to read all of these sensor values
+
+
+Things to investigate if I wanted to make this cleaner:
+1.) what can go in different files
+2.) that proc system access stuff
+3.) that boiler plate thing  icould get rid of
+4.) how best to loop this info (while still being able to read and write other info to it)
+
+my infinite loop killed the pi lol
+
+revised:
+1.) do once to read all sensor values
+2.) then create loop (put a wait in ther for like 1 second)
+
+
+////////05/15/24
+
+I am continuing to crash the board.  My read command is the cause.  time to unsimplify it 
+
+
+////////05/16/24
+
+OK EVERYTHING WORKS!!!!!! NOW !!!!
+
+Things to investigate if I wanted to make this cleaner:
+1.) what can go in different files
+2.) that proc system access stuff
+3.) that boiler plate thing  icould get rid of
+4.) how best to loop this info (while still being able to read and write other info to it)
+5.) how to properly calibrate the sensor to get more accurate data on touched
+6.) how the sensor should be initialized
+
+BUT F it.  For now this is good enough....
+
+Onto the yocto build!!

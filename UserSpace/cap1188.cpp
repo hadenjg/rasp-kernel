@@ -1,6 +1,9 @@
 #include <endian.h>
 #include <iostream>
 #include <fstream>
+#include <string>
+//#include <ctime>
+#include <unistd.h>
 
 #include <thread>
 #include <chrono>
@@ -57,6 +60,9 @@ int write() {
 }*/
 
 int read() {
+
+    while(1)
+    {  
     std::ifstream cap1188_in("/dev/CAP1188");
     if (!cap1188_in.is_open()) {
         std::cerr << "Could not open /dev/CAP1188" << std::endl;
@@ -74,25 +80,93 @@ int read() {
 
     std::ifstream sensor1_in("/sys/kernel/cap1188/sensor1");
     if (!sensor1_in.is_open()) {
-        std::cerr << "Could not open /dev/CAP1188" << std::endl;
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor1" << std::endl;
         return -1;
     }
 
-    char nope[2] = {};
-
-    if (!sensor1_in.read(nope, sizeof(nope))) {
-        std::cout << "Read Success!!! sys" << std::endl;
-    }
-    else {
-        std::cout << "Read failed sys" << std::endl;
+    std::ifstream sensor2_in("/sys/kernel/cap1188/sensor2");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor2" << std::endl;
+        return -1;
     }
 
-    for(int i =0; i < sizeof(nope); i++)
-    {
-        printf("%x", wow[i]);
-        std::cout << std::endl;
+    std::ifstream sensor3_in("/sys/kernel/cap1188/sensor3");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor3" << std::endl;
+        return -1;
     }
 
+    std::ifstream sensor4_in("/sys/kernel/cap1188/sensor4");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor4" << std::endl;
+        return -1;
+    }
+
+    std::ifstream sensor5_in("/sys/kernel/cap1188/sensor5");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor5" << std::endl;
+        return -1;
+    }
+
+    std::ifstream sensor6_in("/sys/kernel/cap1188/sensor6");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor6" << std::endl;
+        return -1;
+    }
+
+    std::ifstream sensor7_in("/sys/kernel/cap1188/sensor7");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor7" << std::endl;
+        return -1;
+    }
+
+    std::ifstream sensor8_in("/sys/kernel/cap1188/sensor8");
+    if (!sensor1_in.is_open()) {
+        std::cerr << "Could not open /sys/kernel/cap1188/sensor8" << std::endl;
+        return -1;
+    }
+
+
+
+
+        sleep(1);
+        std::string value{};
+        std::string value2{};
+        std::string value3{};
+        std::string value4{};
+        std::string value5{};
+        std::string value6{};
+        std::string value7{};
+        std::string value8{};
+        cap1188_in.read(wow, sizeof(wow));
+        std::getline(sensor1_in, value);
+        std::cout << "Value read in from sensor 1: " << value << std::endl;
+        std::getline(sensor2_in, value3);
+        std::cout << "Value read in from sensor 2: " << value2 << std::endl;
+        std::getline(sensor3_in, value3);
+        std::cout << "Value read in from sensor 3: " << value3 << std::endl;
+        std::getline(sensor4_in, value);
+        std::cout << "Value read in from sensor 4: " << value4 << std::endl;
+        std::getline(sensor5_in, value5);
+        std::cout << "Value read in from sensor 5: " << value5 << std::endl;
+        std::getline(sensor6_in, value6);
+        std::cout << "Value read in from sensor 6: " << value6 << std::endl;
+        std::getline(sensor7_in, value7);
+        std::cout << "Value read in from sensor 7: " << value7 << std::endl;
+        std::getline(sensor8_in, value8);
+        std::cout << "Value read in from sensor 8: " << value8 << std::endl;
+    
+
+    cap1188_in.close();
+    sensor1_in.close();
+    sensor2_in.close();
+    sensor3_in.close();
+    sensor4_in.close();
+    sensor5_in.close();
+    sensor6_in.close();
+    sensor7_in.close();
+    sensor8_in.close();
+    }
     return 0;
 }
 
