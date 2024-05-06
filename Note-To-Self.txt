@@ -287,3 +287,291 @@ getting confused the more i dig into this:
 watching this video
 
 https://www.youtube.com/watch?v=g9-wgdesvwA
+
+//04/22/24/////
+
+
+you need below .driver .id_table = "match_table"  //whatever in the i2c_driver for module i2c driver to work
+
+static const struct of_device_id cap1188_of_match_table[] = {
+{.compatible = "
+
+look at the kernel code and compare to that i guess. (still didn't work... just ignore for now)
+
+Should be regerstering this as some sort of framework and not just a new char device
+
+nvm this is going to far down the rabbit hole.  Can't find any info on this whatsoever
+
+https://stackoverflow.com/questions/41492850/does-i2c-driver-need-to-be-implemented-just-like-any-other-character-device-driv
+
+page 221 -> 236
+https://bootlin.com/doc/training/linux-kernel/linux-kernel-slides.pdf
+
+-Just make the char device stuff so you can access it like a normal device driver.  Then if you feel
+experimental try to figure out what this all means.  (looks like you will have to go reading through the kernel code to really figure any of this out)
+
+
+04/23/24-------------------------------------------------------------------------------------------------
+
+==============================
+Useful links:
+==============================
+https://embetronicx.com/linux-device-driver-tutorials/
+https://embetronicx.com/tutorials/linux/device-drivers/i2c-linux-device-driver-using-raspberry-pi/#How_I2C_bus_driver_works
+kernel.org/doc/html/v4.14/driver-api/i2c.html
+
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+github.com/torvalds/linux/blob/master/include/linux/i2c.h
+
+upto date somewhat:
+kernel.org/doc/html/latest/i2c/writing-clients.html
+
+//seemingly correct way to go about this:
+github.com/torvalds/linux/blob/master/drivers/input/keyboard/cap11xx.c
+
+https://pinout.xyz/
+==============================
+TODO:
+=============================
+General Knowledge/Problems:
+1.) eventually replace __init and -_exit with module_i2c_driver() (made multiple attempts putting on hold for now)
+2.) replace the manual operation of wrting with i2c to that regmap thing that was being done 
+in the kernel code for cap11xx 
+
+Then:
+1.) Properly Initialize the device (have leds light up when sensors are touched and look at what other regs do)
+2.) recieve the sensor information from device
+3.) write user app that prints the sensor info to the screen (sysfs)
+
+Extra:
+1.) Try to use the inbuild kernel module for this chip and see what happens
+2.) Create a developers blog about the journey so far?
+============================
+
+OK so i got lost in those semantics for a couple of days.....  Ignore it all for now
+
+Right now:
+1.) make it accessible from the userspace by creating a dev file
+2.) from user space make app to write to led
+
+So how to abstract this?
+
+When I am telling the chip to read/write should I be passing the register address to the driver or should the driver already know this????
+
+
+DOWNLOAD VS CODE FOR THIS SINCE I AM DEVELOPING ON THE PI ANYWAY.  This is harder to read in vim/tmux and i am too lazy to rice it  and i tried neovim but that was deleting files
+
+
+so if i just read* then how can i specifiy what sensor i want to read????
+or do i just pass back all the info from every sensor??
+
+ok so instead of doing any of that I will keep it all in the device driver..
+
+Then I will expose the sensor data via /sysfs which can be read from 
+then i will expose the led registers via the /sysfs which can be written to
+
+So actionable to do list:
+//////////////1.) get /sysfs led registers set up
+//////////////2.) test to make sure they work in userspace 
+3.) get sensor data reading to kernel module
+4.) get /sysfs sensor data set up
+5.) test sysfs in userspace
+6.) read through documentation registers to see if I should be initializing the device any way better
+7.) extra(add a gpio for reset so that I can reset the device on command/ during initialization)
+
+Then i can move onto the yocto build of this or go onto spi stuff (if I am doing the yocto build, I will have to do it at my house.....)
+
+This seems easy enough...
+
+Just create global variables in the file that are read to and are updated
+
+i guess this would only work for reading the sensor data...  
+
+Once the device is probed have it go into a loop that is constantly reading all the sensor info one at a time and updates every variable...
+
+Could not really tell it to write to an led.  And the speed might not be great now that it has to read
+every sensor every time....
+
+I think I'm ok on the speed I guess..
+
+See if this works. I think this would be ok for reading the sensor data (monitoring)
+
+However I think this would still need to have something else to write to the leds...  Perhaps this 
+is what the ioctl should be used for...
+
+I guess do one thing at a time for now..  (also may need to kick off reading from read rather than probe
+so that this isn't stuck in an infinite loop it can't get out of until removed)
+
+new to do:
+
+1.) get sensor data reading to kernel module 
+2.) get /sysfs sensor data set up
+3.) test sysfs in userspace
+4.) create a char device (don't do the infinite loop thing)
+5.) add ioctl for write (have to figure out what info to pass between to know what led to write to I guess its jsut a value since it already knows the address of the leds... so i don't need to pass a struct or anything)
+6.) have read , read all the registers 
+
+extra
+4.) read through documentation registers to see if I should be initializing the device any way better
+7.) extra(add a gpio for reset so that I can reset the device on command/ during initialization)
+
+////////04/24/24
+
+Revised to do after thinking about it
+
+1.) create char device
+2.) test write
+3.) setup read
+4.) test read using 1 sensor
+5.) change read to update multiple variables for /sysfs
+6.) read sysfs from userspace
+
+
+////////04/26/24
+
+finished creating the char device and it shows up in /dev 
+
+which is good.
+
+Now I just need to read/write to it and see that it gives these messages just to verify
+these funcitons are being accessed.
+
+Then i can add in the funcitonality of each function
+
+Next time:
+add functionality into each function
+
+
+///////04/29/24
+
+I was able to successfully write to the device driver from the user space in python
+(Not before crashing the pi lol, I had attempted to use the user space data before 
+copying it over to kernel space)
+
+Tomorrow:
+
+1.)Write to it in a cpp program. 
+2.)Figure out why its writing in a loop in the python program, and why you need to run it as sudo
+3.) then see if you can read from it from both (just getting the print first then actually attemptingto read data)
+
+////////04/30/24
+
+wrote to it from a cpp program.  however it is also looping doing that even though it should only call it once...... and I still ahve to call from sudo...
+it was writing in a loop because i wasn't returning valid values for successfull reads and writes
+1.)Write to it in a cpp program. XXXXXXXXXXXXXXXXX
+2.)Figure out why its writing in a loop in the python program XXXXXXXXXXXXXXXXXXXXXXXXXXXXkkkk
+3.) and why you need to run it as sudo (putting off until tomorrow)
+4.) then see if you can read from it from both (just getting the print first then actually attemptingto read data)
+
+I attempted to read from the device and it crashed the Pi!!!  
+
+Which is cool.  
+
+Have to go in and figure out what is killing it:
+
+Updated to do:
+
+1.) figure out how to change permissions of your /dev file or add user to group 
+2.) figure out how to read from the sensor
+
+
+05/01/24-------------------------------------------------------------------------------------------------
+
+==============================
+Useful links:
+==============================
+https://embetronicx.com/linux-device-driver-tutorials/
+https://embetronicx.com/tutorials/linux/device-drivers/i2c-linux-device-driver-using-raspberry-pi/#How_I2C_bus_driver_works
+kernel.org/doc/html/v4.14/driver-api/i2c.html
+
+https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/DataSheets/00001620C.pdf
+
+github.com/torvalds/linux/blob/master/include/linux/i2c.h
+
+upto date somewhat:
+kernel.org/doc/html/latest/i2c/writing-clients.html
+
+//seemingly correct way to go about this:
+github.com/torvalds/linux/blob/master/drivers/input/keyboard/cap11xx.c
+
+https://pinout.xyz/
+==============================
+
+Updated to do:
+
+1.) figure out how to change permissions of your /dev file or add user to group 
+2.) figure out how to read from the sensor
+
+
+sudo chmod 777 /dev/CAP1188 
+
+^ this allows you to read / write to the dev file (just like any other file)
+
+Should probably have a specific group for that though..  JUST A FOR THOUGHT, for now it is ok though
+
+
+next need to figure out how to read from this.
+
+need to read the data sheet again.  Perhaps it is not writing anything to me until I set some sort of value first
+
+or atleast I need to check a register to see if it is currently taking any measuremnt
+
+
+To read it seems like you need to first write to the register just the address of the register you want to read, then read 
+
+https://stackoverflow.com/questions/39409124/access-devices-register-i2c
+
+
+OK I am going to attempt to read the register that I am writing to to control the LEDS!
+
+That way I will know if I am actually reading the correct value or not.
+
+
+////////05/03/24
+
+
+I KEEP CRASHING THE PI LOLOLOL
+
+send a better series of writes then send read???
+
+
+HAHAHHA it worked!! I was able to read the register value by just first writing to the device the address of the register, then sending a read command!!
+
+The reason it was crashing is because my cpp userpace program is complete ass!!!!
+
+Need to figure out how to fix that shit..
+
+
+Ok lol it is crashing my app A lot!!!!  Need to figure this out for sure..
+
+
+SO far successful stuff:
+
+1.) am able to write to cap1188 over i2c
+2.) am able to write to cap1188 over i2c from user spcae using char device fops
+3.) am able to read from cap188 over i2c
+
+To do still:
+1.) read from cap1188 over i2c from userspace
+2.) create /sysdev or whatever it was called variables to be updated by read
+3.) convert read to update all sysdev variables with readings from the sensors
+4.) convert userspace to start the read process then actually read from sysproc or whatver it is called
+
+
+then once all that is good I think I'll have the baseline for everything I really set out to accomplish for i2c stuff..
+
+So then I can create the yocto build with this i2c application and make sure that works....
+
+After all this:
+
+1.) make yocto build with this i2c application 
+2.) do this same thing but with smbus (don't need to do yocto build for this one)
+3.) do this same thing but with spi (make yocto build just for practice)
+4.) move onto the block device
+5.) then once i finish the driver for the block device.  I can create a yocto build that interacts with both the block device and character device at the same time (first just on my pi)
+like read the sensor data and store that info in the block device then powercycle and read the data back! 
+6.) then move onto other os type enviroments like brad suggested
+
+BUT FOR NOW:
+read from cap1188 over i2c from userspace 

@@ -5,6 +5,26 @@
 #include <linux/delay.h>
 #include <linux/kernel.h>
 
+//--CHAR DEV DEFINITIONS---------------------------------------------------------------
+
+//#define DEVICE_NAME "cap1188" //dev name as it appears in /proc/devices
+#define BUF_LEN 80 //max length of the message from the device
+
+static int major; //major number assigned to the device driver
+
+enum {
+    CDEV_NOT_USED = 0,
+    CDEV_EXCLUSIVE_OPEN = 1,
+};
+
+static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED);
+
+static char msg[BUF_LEN + 1];
+
+static struct class *cls;
+
+//--I2C DEV DEFINITIONS---------------------------------------------------------------
+
 #define I2C_BUS_AVAILABLE (1)
 #define SLAVE_DEVICE_NAME ("CAP1188")
 #define CAP1188_SLAVE_ADDR (0x29)
@@ -12,13 +32,15 @@
 static struct i2c_adapter *cap_i2c_adapter = NULL;
 static struct i2c_client *cap_i2c_client = NULL;
 
-static int I2C_Write(unsigned char *buf, unsigned int len)
+//--I2C DEV FUNCTIONS-----------------------------------------------------------------
+
+static int I2C_Write(char *buf, unsigned int len)
 {
     int ret = i2c_master_send(cap_i2c_client, buf, len);
     return ret;
 }
 
-static int I2C_Read(unsigned char *out_buf, unsigned int len)
+static int I2C_Read(char *out_buf, unsigned int len)
 {
     int ret = i2c_master_recv(cap_i2c_client, out_buf, len);
     return ret;
@@ -44,6 +66,16 @@ static int cap_probe(struct i2c_client *client)//, const struct i2c_device_id *i
     buf[1] = 0xfe;
     I2C_Write(buf, 2);
     pr_info("CAP1188 probed!!!\n");
+
+
+    unsigned char but[1] = {0};
+    but[0] = 0x74;
+    I2C_Write(but, 1);
+
+    unsigned char testting = {0};
+    I2C_Read(&testting, sizeof(testting));
+    pr_info("CAP1188 this write does not destory the pi!!!\n");
+    pr_info("I actually read back information!!!! it is this: %c. \n", testting);
     return 0;
 }
 
@@ -63,9 +95,6 @@ static const struct i2c_device_id cap_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, cap_id);
 
-//static const struct of_device_id cap_of_match[] = {
-	//{.compatible = "
-
 static struct i2c_driver cap_driver = {
     .driver = {
         .name = SLAVE_DEVICE_NAME,
@@ -79,6 +108,65 @@ static struct i2c_driver cap_driver = {
 static struct i2c_board_info cap_i2c_board_info = {
     I2C_BOARD_INFO(SLAVE_DEVICE_NAME, CAP1188_SLAVE_ADDR)
 };
+
+//--CHAR DEVICE FUNCTIONS-----------------------------------------------------
+
+static int cap1188_release(struct inode *inode, struct file *file)
+{
+	atomic_set(&already_open, CDEV_NOT_USED);
+	module_put(THIS_MODULE);
+
+    return 0;
+}
+
+static int cap1188_open(struct inode *inode, struct file *file)
+{
+    if(atomic_cmpxchg(&already_open, CDEV_NOT_USED, CDEV_EXCLUSIVE_OPEN)) 
+        return -EBUSY;
+
+    pr_info("I am attempting to open from the cap188 device driver?\n");
+    try_module_get(THIS_MODULE);
+    return 0;
+}
+
+static ssize_t cap1188_read(struct file *filp, char __user *buffer, size_t length, loff_t *offset)
+{
+    //Don't actually do anything right now just verify that it returns something
+    pr_info("I am reading from the cap1188 driver\n");
+    unsigned char but[1] = {0};
+    but[0] = 0x74;
+    I2C_Write(but, 1);
+    I2C_Read(buffer, length);
+    return 0;
+}
+
+static ssize_t cap1188_write(struct file *filp, const char __user *buff, size_t len, loff_t *off)
+{
+    //unsigned char buf[2] = {0};
+    //buf[0] = 0x74;
+    //buf[1] = 0xfe;
+    if(len > BUF_LEN)
+        return -EINVAL;
+    
+    if(copy_from_user(msg, buff, len) != 0)
+        return -EFAULT;
+
+    //I2C_Write(buff, 2);
+    pr_info("I am attempting to write to the cap1188 device driver!\n");
+
+    I2C_Write(msg, len);
+    return len;
+}
+
+struct file_operations cap1188_fops = {
+	.owner = THIS_MODULE,
+	.read = cap1188_read,
+	.open = cap1188_open,
+	.release = cap1188_release,
+	.write = cap1188_write
+};
+
+//--DEVICE DRIVER BOILER PLATE CODE-------------------------------------------
 
 static int __init cap_driver_init(void)
 {
@@ -97,6 +185,23 @@ static int __init cap_driver_init(void)
 
 	    i2c_put_adapter(cap_i2c_adapter);
     }
+
+    //create char device
+    major = register_chrdev(0, SLAVE_DEVICE_NAME, &cap1188_fops);
+
+    if(major < 0) {
+        pr_alert("Registering char device failed with %d\n", major);
+	return major;
+    }
+
+    pr_info("I was assigned major number %d. \n", major);
+
+    cls = class_create(THIS_MODULE, SLAVE_DEVICE_NAME);
+
+    device_create(cls, NULL, MKDEV(major, 0), NULL, SLAVE_DEVICE_NAME);
+
+    pr_info("Device created on /dev/%s\n", SLAVE_DEVICE_NAME);
+
     pr_info("Driver Added!!!!\n");
     return ret;
 }
@@ -105,6 +210,10 @@ static void __exit cap_driver_exit(void)
 {
 	i2c_unregister_device(cap_i2c_client);
 	i2c_del_driver(&cap_driver);
+
+	device_destroy(cls, MKDEV(major, 0));
+	class_destroy(cls);
+	unregister_chrdev(major, SLAVE_DEVICE_NAME);
 	pr_info("Driver Removed!!!\n");
 }
 
